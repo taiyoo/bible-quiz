@@ -27,6 +27,21 @@
             <span>Minutes</span>
             <input id="minutesInput" type="number" min="1" max="30" value="5">
           </label>
+          <label class="sound-toggle" for="soundToggle">
+            <input id="soundToggle" type="checkbox" checked>
+            <span>Sound</span>
+          </label>
+          <label class="volume-control" for="volumeInput">
+            <span>Volume</span>
+            <input id="volumeInput" type="range" min="0" max="100" value="55">
+          </label>
+          <label class="sound-style" for="soundStyleInput">
+            <span>Style</span>
+            <select id="soundStyleInput">
+              <option value="retro" selected>Retro</option>
+              <option value="soft">Soft</option>
+            </select>
+          </label>
           <button id="startButton" class="primary-button" type="button">Start</button>
           <button id="resetButton" class="icon-button" type="button" aria-label="Reset game" title="Reset game">↺</button>
         </div>
@@ -99,6 +114,7 @@
       </section>
 
       <dialog id="resultDialog" class="result-dialog">
+        <canvas id="confettiCanvas" class="confetti-canvas" aria-hidden="true"></canvas>
         <div class="result-content">
           <span class="flame big" aria-hidden="true"></span>
           <h2 id="resultTitle">Time is up!</h2>

@@ -679,6 +679,8 @@ const TEAM_SHORTCUTS = {
   left: ["A", "B", "C", "D"],
   right: ["1", "2", "3", "4"]
 };
+const SOUND_SETTINGS_KEY = "ten-lamps-sound-settings";
+const CONFETTI_COLORS = ["#f6c84f", "#f58b3d", "#ee596b", "#20a7a0", "#4785e8", "#63b35d", "#fff8e8"];
 
 const state = {
   running: false,
@@ -699,9 +701,13 @@ const els = {
   minutesInput: document.querySelector("#minutesInput"),
   startButton: document.querySelector("#startButton"),
   resetButton: document.querySelector("#resetButton"),
+  soundToggle: document.querySelector("#soundToggle"),
+  volumeInput: document.querySelector("#volumeInput"),
+  soundStyleInput: document.querySelector("#soundStyleInput"),
   timerDisplay: document.querySelector("#timerDisplay"),
   gameMessage: document.querySelector("#gameMessage"),
   resultDialog: document.querySelector("#resultDialog"),
+  confettiCanvas: document.querySelector("#confettiCanvas"),
   resultTitle: document.querySelector("#resultTitle"),
   resultSummary: document.querySelector("#resultSummary"),
   playAgainButton: document.querySelector("#playAgainButton"),
@@ -730,6 +736,13 @@ const els = {
   }
 };
 
+let audioContext = null;
+const confetti = {
+  animationId: null,
+  particles: [],
+  startedAt: 0
+};
+
 function initializeWells() {
   ["left", "right"].forEach((team) => {
     els[team].well.innerHTML = "";
@@ -739,6 +752,164 @@ function initializeWells() {
       els[team].well.append(cell);
     }
   });
+}
+
+function loadSoundSettings() {
+  try {
+    const settings = JSON.parse(window.localStorage.getItem(SOUND_SETTINGS_KEY));
+    if (!settings) return;
+
+    els.soundToggle.checked = settings.enabled !== false;
+    els.volumeInput.value = String(Math.max(0, Math.min(100, Number(settings.volume) || 55)));
+    els.soundStyleInput.value = settings.style === "soft" ? "soft" : "retro";
+  } catch {
+    els.soundToggle.checked = true;
+    els.volumeInput.value = "55";
+    els.soundStyleInput.value = "retro";
+  }
+}
+
+function saveSoundSettings() {
+  const settings = {
+    enabled: els.soundToggle.checked,
+    volume: Number(els.volumeInput.value),
+    style: els.soundStyleInput.value
+  };
+  window.localStorage.setItem(SOUND_SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function soundVolume() {
+  if (!els.soundToggle.checked) return 0;
+  return Math.max(0, Math.min(1, Number(els.volumeInput.value) / 100));
+}
+
+function ensureAudioContext() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+
+  if (!audioContext) {
+    audioContext = new AudioContextClass();
+  }
+
+  if (audioContext.state === "suspended") {
+    audioContext.resume();
+  }
+
+  return audioContext;
+}
+
+function playTone(frequency, startTime, duration, type, volume, endFrequency = frequency) {
+  const context = ensureAudioContext();
+  if (!context || volume <= 0) return;
+
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, startTime);
+  oscillator.frequency.exponentialRampToValueAtTime(endFrequency, startTime + duration);
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume * 0.18), startTime + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start(startTime);
+  oscillator.stop(startTime + duration + 0.03);
+}
+
+function playNoise(startTime, duration, volume) {
+  const context = ensureAudioContext();
+  if (!context || volume <= 0) return;
+
+  const bufferSize = context.sampleRate * duration;
+  const buffer = context.createBuffer(1, bufferSize, context.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let index = 0; index < bufferSize; index += 1) {
+    data[index] = (Math.random() * 2 - 1) * (1 - index / bufferSize);
+  }
+
+  const source = context.createBufferSource();
+  const gain = context.createGain();
+  const filter = context.createBiquadFilter();
+  filter.type = "highpass";
+  filter.frequency.setValueAtTime(700, startTime);
+  gain.gain.setValueAtTime(volume * 0.12, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+  source.buffer = buffer;
+  source.connect(filter);
+  filter.connect(gain);
+  gain.connect(context.destination);
+  source.start(startTime);
+  source.stop(startTime + duration);
+}
+
+function playSound(name) {
+  const volume = soundVolume();
+  const context = ensureAudioContext();
+  if (!context || volume <= 0) return;
+
+  const now = context.currentTime;
+  const softSounds = {
+    start: [
+      [392, 0, 0.09, "triangle"],
+      [523.25, 0.1, 0.12, "triangle"]
+    ],
+    correct: [
+      [523.25, 0, 0.08, "sine"],
+      [659.25, 0.08, 0.08, "sine"],
+      [783.99, 0.16, 0.13, "sine"]
+    ],
+    wrong: [
+      [246.94, 0, 0.12, "triangle"],
+      [196, 0.1, 0.16, "triangle"]
+    ],
+    win: [
+      [392, 0, 0.11, "triangle"],
+      [523.25, 0.1, 0.11, "triangle"],
+      [659.25, 0.2, 0.11, "triangle"],
+      [783.99, 0.3, 0.22, "triangle"]
+    ],
+    tie: [
+      [440, 0, 0.12, "sine"],
+      [440, 0.16, 0.12, "sine"],
+      [587.33, 0.32, 0.18, "sine"]
+    ]
+  };
+  const retroSounds = {
+    start: [
+      [523.25, 0, 0.055, "square", 659.25],
+      [783.99, 0.06, 0.08, "square", 1046.5]
+    ],
+    correct: [
+      [987.77, 0, 0.045, "square", 1318.51],
+      [1318.51, 0.05, 0.045, "square", 1567.98],
+      [1760, 0.1, 0.09, "square", 2093]
+    ],
+    wrong: [
+      [220, 0, 0.08, "square", 185],
+      [164.81, 0.08, 0.14, "square", 123.47]
+    ],
+    win: [
+      [523.25, 0, 0.07, "square", 659.25],
+      [659.25, 0.07, 0.07, "square", 783.99],
+      [783.99, 0.14, 0.07, "square", 1046.5],
+      [1046.5, 0.21, 0.08, "square", 1318.51],
+      [1567.98, 0.31, 0.18, "square", 2093]
+    ],
+    tie: [
+      [659.25, 0, 0.07, "square", 783.99],
+      [659.25, 0.12, 0.07, "square", 783.99],
+      [987.77, 0.24, 0.15, "square", 1174.66]
+    ]
+  };
+  const sounds = els.soundStyleInput.value === "soft" ? softSounds : retroSounds;
+
+  sounds[name].forEach(([frequency, delay, duration, type, endFrequency]) => {
+    playTone(frequency, now + delay, duration, type, volume, endFrequency);
+  });
+
+  if (els.soundStyleInput.value === "retro" && name === "wrong") {
+    playNoise(now + 0.03, 0.08, volume);
+  }
 }
 
 function shuffle(items) {
@@ -847,11 +1018,13 @@ function answerQuestion(team, choice, selectedButton) {
     els[team].score.textContent = state.teams[team].score;
     selectedButton.classList.add("correct");
     els[team].feedback.textContent = "Correct! Your lamp shines brighter.";
+    playSound("correct");
     animateBlock(team);
     renderWell(team);
   } else {
     selectedButton.classList.add("wrong");
     els[team].feedback.textContent = `Good try. The answer was ${question.answer}.`;
+    playSound("wrong");
   }
 
   const waitTime = isCorrect ? 850 : 1250;
@@ -887,6 +1060,7 @@ function animateBlock(team) {
 
 function resetState() {
   window.clearInterval(state.timerId);
+  stopConfetti();
   state.running = false;
   state.finished = false;
   state.timerId = null;
@@ -926,6 +1100,7 @@ function startGame() {
   state.finished = false;
   els.startButton.textContent = "Pause";
   els.gameMessage.textContent = "Answer quickly and carefully. Both teams receive the same difficulty each round.";
+  playSound("start");
 
   if (!state.teams.left.currentQuestion) {
     drawQuestion("left");
@@ -991,10 +1166,97 @@ function finishGame() {
   if (typeof els.resultDialog.showModal === "function") {
     els.resultDialog.showModal();
   }
+  playSound(leftScore === rightScore ? "tie" : "win");
+  launchConfetti(leftScore > rightScore ? "left" : rightScore > leftScore ? "right" : "tie");
+}
+
+function resizeConfettiCanvas() {
+  const canvas = els.confettiCanvas;
+  const pixelRatio = window.devicePixelRatio || 1;
+  canvas.width = Math.floor(window.innerWidth * pixelRatio);
+  canvas.height = Math.floor(window.innerHeight * pixelRatio);
+  canvas.style.width = `${window.innerWidth}px`;
+  canvas.style.height = `${window.innerHeight}px`;
+  const context = canvas.getContext("2d");
+  context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  return context;
+}
+
+function createConfettiParticle(winner) {
+  const fromLeft = winner === "left";
+  const fromRight = winner === "right";
+  const startX = fromLeft ? window.innerWidth * 0.24 : fromRight ? window.innerWidth * 0.76 : window.innerWidth * 0.5;
+  const spread = winner === "tie" ? window.innerWidth * 0.38 : window.innerWidth * 0.18;
+  return {
+    x: startX + (Math.random() - 0.5) * spread,
+    y: -20 - Math.random() * 160,
+    size: 7 + Math.random() * 10,
+    color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+    rotation: Math.random() * Math.PI,
+    rotationSpeed: -0.18 + Math.random() * 0.36,
+    velocityX: -2.4 + Math.random() * 4.8,
+    velocityY: 2.5 + Math.random() * 4,
+    wave: Math.random() * Math.PI * 2
+  };
+}
+
+function launchConfetti(winner) {
+  stopConfetti();
+  const context = resizeConfettiCanvas();
+  confetti.startedAt = performance.now();
+  confetti.particles = Array.from({ length: winner === "tie" ? 170 : 210 }, () => createConfettiParticle(winner));
+
+  function drawFrame(timestamp) {
+    const elapsed = timestamp - confetti.startedAt;
+    context.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+    confetti.particles.forEach((particle) => {
+      particle.wave += 0.08;
+      particle.x += particle.velocityX + Math.sin(particle.wave) * 0.9;
+      particle.y += particle.velocityY;
+      particle.velocityY += 0.035;
+      particle.rotation += particle.rotationSpeed;
+
+      context.save();
+      context.translate(particle.x, particle.y);
+      context.rotate(particle.rotation);
+      context.fillStyle = particle.color;
+      context.fillRect(-particle.size / 2, -particle.size / 3, particle.size, particle.size * 0.66);
+      context.restore();
+
+      if (particle.y > window.innerHeight + 40) {
+        Object.assign(particle, createConfettiParticle(winner));
+        particle.y = -20;
+      }
+    });
+
+    if (elapsed < 5000) {
+      confetti.animationId = window.requestAnimationFrame(drawFrame);
+    } else {
+      stopConfetti();
+    }
+  }
+
+  confetti.animationId = window.requestAnimationFrame(drawFrame);
+}
+
+function stopConfetti() {
+  if (confetti.animationId) {
+    window.cancelAnimationFrame(confetti.animationId);
+    confetti.animationId = null;
+  }
+  confetti.particles = [];
+  const context = els.confettiCanvas?.getContext("2d");
+  if (context) {
+    context.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  }
 }
 
 els.startButton.addEventListener("click", startGame);
 els.resetButton.addEventListener("click", resetState);
+els.soundToggle.addEventListener("change", saveSoundSettings);
+els.volumeInput.addEventListener("input", saveSoundSettings);
+els.soundStyleInput.addEventListener("change", saveSoundSettings);
 els.minutesInput.addEventListener("change", () => {
   if (!state.running) {
     resetState();
@@ -1002,10 +1264,20 @@ els.minutesInput.addEventListener("change", () => {
 });
 els.playAgainButton.addEventListener("click", () => {
   els.resultDialog.close();
+  stopConfetti();
   resetState();
   startGame();
 });
-els.closeResultButton.addEventListener("click", () => els.resultDialog.close());
+els.closeResultButton.addEventListener("click", () => {
+  els.resultDialog.close();
+  stopConfetti();
+});
+els.resultDialog.addEventListener("close", stopConfetti);
+window.addEventListener("resize", () => {
+  if (confetti.animationId) {
+    resizeConfettiCanvas();
+  }
+});
 window.addEventListener("keydown", (event) => {
   const activeTag = document.activeElement?.tagName;
   if (activeTag === "INPUT" || activeTag === "TEXTAREA" || event.repeat) return;
@@ -1025,5 +1297,6 @@ window.addEventListener("keydown", (event) => {
   }
 });
 
+loadSoundSettings();
 initializeWells();
 resetState();

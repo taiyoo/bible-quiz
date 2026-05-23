@@ -159,6 +159,37 @@ button {
   gap: 8px;
 }
 
+.sound-toggle,
+.volume-control,
+.sound-style {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.sound-toggle input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--teal);
+}
+
+.volume-control input {
+  width: 96px;
+  accent-color: var(--teal);
+}
+
+.sound-style select {
+  min-height: 38px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--cream);
+  font-weight: 800;
+}
+
 .time-control input {
   width: 70px;
   padding: 10px 8px;
@@ -479,6 +510,8 @@ button {
   border: 0;
   border-radius: 8px;
   padding: 0;
+  overflow: visible;
+  background: transparent;
   box-shadow: var(--shadow);
 }
 
@@ -487,9 +520,21 @@ button {
 }
 
 .result-content {
+  position: relative;
+  z-index: 1;
   padding: 24px;
   text-align: center;
   background: var(--cream);
+  border-radius: 8px;
+}
+
+.confetti-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
 }
 
 .result-content h2 {
