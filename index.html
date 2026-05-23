@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ten Lamps Bible Quiz</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="game-shell">
+      <section class="top-bar" aria-label="Game controls and score">
+        <div class="brand-mark">
+          <span class="flame" aria-hidden="true"></span>
+          <div>
+            <h1>Ten Lamps Bible Quiz</h1>
+            <p>Sunday school team challenge</p>
+          </div>
+        </div>
+
+        <div class="timer-card" aria-live="polite">
+          <span class="timer-label">Time</span>
+          <strong id="timerDisplay">05:00</strong>
+        </div>
+
+        <div class="controls" aria-label="Game controls">
+          <label class="time-control" for="minutesInput">
+            <span>Minutes</span>
+            <input id="minutesInput" type="number" min="1" max="30" value="5">
+          </label>
+          <button id="startButton" class="primary-button" type="button">Start</button>
+          <button id="resetButton" class="icon-button" type="button" aria-label="Reset game" title="Reset game">↺</button>
+        </div>
+      </section>
+
+      <section class="story-banner" aria-label="Ten virgins theme">
+        <div class="lamp-row" aria-hidden="true">
+          <span class="lamp lit"></span>
+          <span class="lamp lit"></span>
+          <span class="lamp lit"></span>
+          <span class="lamp lit"></span>
+          <span class="lamp lit"></span>
+          <span class="lamp"></span>
+          <span class="lamp"></span>
+          <span class="lamp"></span>
+          <span class="lamp"></span>
+          <span class="lamp"></span>
+        </div>
+        <p id="gameMessage">Set the time, press Start, and help your team keep their lamp bright.</p>
+      </section>
+
+      <section class="arena" aria-label="Two team quiz arena">
+        <article class="team-panel team-left" data-team="left">
+          <header class="team-header">
+            <input id="leftName" class="team-name" value="Team Light" aria-label="Left team name">
+            <div class="score-pill"><span id="leftScore">0</span> correct</div>
+          </header>
+
+          <div class="team-stage">
+            <div class="well-shell" aria-label="Team Light score tower">
+              <div class="well-grid" id="leftWell"></div>
+              <div class="falling-block" id="leftFallingBlock"></div>
+            </div>
+
+            <div class="quiz-card">
+              <div class="question-meta">
+                <span id="leftDifficulty">Ready</span>
+                <span id="leftProgress">Question 0</span>
+              </div>
+              <h2 id="leftQuestion">Press Start to begin.</h2>
+              <div class="choices" id="leftChoices"></div>
+              <p class="feedback" id="leftFeedback" aria-live="polite"></p>
+            </div>
+          </div>
+        </article>
+
+        <article class="team-panel team-right" data-team="right">
+          <header class="team-header">
+            <input id="rightName" class="team-name" value="Team Wisdom" aria-label="Right team name">
+            <div class="score-pill"><span id="rightScore">0</span> correct</div>
+          </header>
+
+          <div class="team-stage">
+            <div class="quiz-card">
+              <div class="question-meta">
+                <span id="rightDifficulty">Ready</span>
+                <span id="rightProgress">Question 0</span>
+              </div>
+              <h2 id="rightQuestion">Press Start to begin.</h2>
+              <div class="choices" id="rightChoices"></div>
+              <p class="feedback" id="rightFeedback" aria-live="polite"></p>
+            </div>
+
+            <div class="well-shell" aria-label="Team Wisdom score tower">
+              <div class="well-grid" id="rightWell"></div>
+              <div class="falling-block" id="rightFallingBlock"></div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <dialog id="resultDialog" class="result-dialog">
+        <div class="result-content">
+          <span class="flame big" aria-hidden="true"></span>
+          <h2 id="resultTitle">Time is up!</h2>
+          <p id="resultSummary"></p>
+          <div class="result-actions">
+            <button id="playAgainButton" class="primary-button" type="button">Play again</button>
+            <button id="closeResultButton" class="icon-button wide" type="button">Close</button>
+          </div>
+        </div>
+      </dialog>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
