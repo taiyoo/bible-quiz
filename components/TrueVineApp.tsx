@@ -1,76 +1,175 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { AssessmentExperience } from "@/components/AssessmentExperience";
 import { QuizExperience } from "@/components/QuizExperience";
-import { assessments, getAssessmentById, type AssessmentId } from "@/data/assessments";
+import { getAssessmentById, getAssessments, type AssessmentId, type Locale } from "@/data/assessments";
 
 type View = "home" | "quiz" | "assessment";
+
+const uiCopy = {
+  en: {
+    church: "TrueVine Church",
+    title: "Quiz & Assessments",
+    hero: "Bible challenges and spiritual reflection tools for small groups, classes, and church campaigns.",
+    openQuiz: "Open Bible Quiz",
+    browse: "Browse Assessments",
+    powered: "Powered by HoloCare backend",
+    gameType: "Team Game",
+    quizTitle: "Ten Lamps Bible Quiz",
+    quizDescription: "Two teams race through Bible questions with a timer, score board, and shared difficulty rounds.",
+    startQuiz: "Start Quiz",
+    assessment: "Assessment",
+    questions: "questions",
+    open: "Open",
+    benefits: ["100% Free", "No account required", "Instant results", "Group campaign ready"],
+    whyTitle: "Why Take These Assessments?",
+    why: [
+      { title: "Spiritual Growth", body: "Notice strengths and invitations for your next discipleship step." },
+      { title: "Group Reflection", body: "Use campaign links for classes, small groups, and ministry cohorts." },
+      { title: "Practical Action", body: "Each result includes Scripture, interpretation, and weekly next steps." },
+    ],
+  },
+  id: {
+    church: "TrueVine Church",
+    title: "Kuis & Assessment",
+    hero: "Tantangan Alkitab dan alat refleksi rohani untuk kelompok kecil, kelas, dan kampanye gereja.",
+    openQuiz: "Buka Kuis Alkitab",
+    browse: "Lihat Assessment",
+    powered: "Didukung backend HoloCare",
+    gameType: "Permainan Tim",
+    quizTitle: "Kuis Alkitab Ten Lamps",
+    quizDescription: "Dua tim menjawab pertanyaan Alkitab dengan timer, papan skor, dan ronde tingkat kesulitan yang seimbang.",
+    startQuiz: "Mulai Kuis",
+    assessment: "Assessment",
+    questions: "pertanyaan",
+    open: "Buka",
+    benefits: ["100% Gratis", "Tanpa akun", "Hasil instan", "Siap kampanye grup"],
+    whyTitle: "Mengapa Mengikuti Assessment Ini?",
+    why: [
+      { title: "Pertumbuhan Rohani", body: "Kenali kekuatan dan undangan Tuhan untuk langkah pemuridan berikutnya." },
+      { title: "Refleksi Kelompok", body: "Gunakan link kampanye untuk kelas, kelompok kecil, dan komunitas pelayanan." },
+      { title: "Aksi Praktis", body: "Setiap hasil berisi ayat, interpretasi, dan langkah mingguan yang konkret." },
+    ],
+  },
+} satisfies Record<Locale, {
+  church: string;
+  title: string;
+  hero: string;
+  openQuiz: string;
+  browse: string;
+  powered: string;
+  gameType: string;
+  quizTitle: string;
+  quizDescription: string;
+  startQuiz: string;
+  assessment: string;
+  questions: string;
+  open: string;
+  benefits: string[];
+  whyTitle: string;
+  why: Array<{ title: string; body: string }>;
+}>;
+
+function normalizeLocale(value: string | null): Locale | null {
+  return value === "id" || value === "bahasa" ? "id" : value === "en" ? "en" : null;
+}
 
 export function TrueVineApp() {
   const searchParams = useSearchParams();
   const requestedAssessment = searchParams.get("assessment");
+  const requestedLocale = normalizeLocale(searchParams.get("locale") || searchParams.get("lang"));
   const campaignToken = searchParams.get("campaign") || searchParams.get("campaignToken");
+  const [locale, setLocale] = useState<Locale>(requestedLocale || "en");
   const [view, setView] = useState<View>("home");
   const [activeAssessmentId, setActiveAssessmentId] = useState<AssessmentId>("prayer-life");
 
   useEffect(() => {
-    const assessment = getAssessmentById(requestedAssessment);
+    if (requestedLocale) {
+      setLocale(requestedLocale);
+      return;
+    }
+    if (typeof navigator !== "undefined" && navigator.language.toLowerCase().startsWith("id")) {
+      setLocale("id");
+    }
+  }, [requestedLocale]);
+
+  useEffect(() => {
+    const assessment = getAssessmentById(requestedAssessment, locale);
     if (!assessment) return;
     setActiveAssessmentId(assessment.id);
     setView("assessment");
-  }, [requestedAssessment]);
+  }, [requestedAssessment, locale]);
 
-  const activeAssessment = getAssessmentById(activeAssessmentId) || assessments[0];
+  const assessmentList = getAssessments(locale);
+  const activeAssessment = getAssessmentById(activeAssessmentId, locale) || assessmentList[0];
+  const t = uiCopy[locale];
 
   return (
     <main className="shell">
       {view === "home" && (
         <section className="home-view" aria-label="TrueVine quiz and assessments">
           <header className="hero-panel">
-            <div className="brand-row">
-              <span className="brand-flame" aria-hidden="true" />
+            <div className="locale-toggle" aria-label="Language selector">
+              <button className={locale === "en" ? "active" : ""} type="button" onClick={() => setLocale("en")}>EN</button>
+              <button className={locale === "id" ? "active" : ""} type="button" onClick={() => setLocale("id")}>ID</button>
+            </div>
+            <div className="brand-row hero-brand">
+              <Image
+                className="brand-logo hero-logo"
+                src="/truevine-logo.jpg"
+                alt="TrueVine Church logo"
+                width={512}
+                height={512}
+                priority
+              />
               <div>
-                <p className="eyebrow">TrueVine Church</p>
-                <h1>Quiz & Assessments</h1>
+                <p className="eyebrow">{t.church}</p>
+                <h1>{t.title}</h1>
               </div>
             </div>
-            <p className="hero-copy">
-              Bible challenges and spiritual reflection tools for small groups, classes, and church campaigns.
-            </p>
+            <p className="hero-copy">{t.hero}</p>
+            <div className="benefit-row">
+              {t.benefits.map((benefit) => <span key={benefit}>{benefit}</span>)}
+            </div>
             <div className="hero-actions">
               <button className="primary-button" type="button" onClick={() => setView("quiz")}>
-                Open Bible Quiz
+                {t.openQuiz}
               </button>
               <a className="secondary-button" href="#assessments">
-                Browse Assessments
+                {t.browse}
               </a>
             </div>
-            <p className="powered-line">Powered by HoloCare backend</p>
+            <p className="powered-line">{t.powered}</p>
           </header>
 
           <section className="feature-grid" aria-label="Quiz and assessment options">
             <article className="feature-card quiz-card-feature">
               <div>
-                <p className="eyebrow">Team Game</p>
-                <h2>Ten Lamps Bible Quiz</h2>
-                <p>Two teams race through Bible questions with a timer, score board, and shared difficulty rounds.</p>
+                <p className="eyebrow">{t.gameType}</p>
+                <h2>{t.quizTitle}</h2>
+                <p>{t.quizDescription}</p>
               </div>
               <button className="primary-button" type="button" onClick={() => setView("quiz")}>
-                Start Quiz
+                {t.startQuiz}
               </button>
             </article>
 
             <div id="assessments" className="assessment-grid">
-              {assessments.map((assessment) => (
+              {assessmentList.map((assessment) => (
                 <article key={assessment.id} className={`feature-card accent-${assessment.accent}`}>
-                  <p className="eyebrow">Assessment</p>
+                  <p className="eyebrow">{t.assessment}</p>
                   <h2>{assessment.title}</h2>
                   <p className="feature-subtitle">{assessment.subtitle}</p>
                   <p>{assessment.description}</p>
+                  <div className="meta-row">
+                    <span>{assessment.time}</span>
+                    <span>{assessment.source}</span>
+                  </div>
                   <div className="card-footer">
-                    <span>{assessment.questions.length} questions</span>
+                    <span>{assessment.questions.length} {t.questions}</span>
                     <button
                       className="secondary-button compact"
                       type="button"
@@ -79,9 +178,21 @@ export function TrueVineApp() {
                         setView("assessment");
                       }}
                     >
-                      Open
+                      {t.open}
                     </button>
                   </div>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="why-panel">
+            <h2>{t.whyTitle}</h2>
+            <div className="why-grid">
+              {t.why.map((item) => (
+                <article key={item.title}>
+                  <h3>{item.title}</h3>
+                  <p>{item.body}</p>
                 </article>
               ))}
             </div>

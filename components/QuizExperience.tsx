@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { bibleQuestions, type BibleQuestion, type Difficulty } from "@/data/bibleQuestions";
 
 type TeamKey = "left" | "right";
@@ -172,7 +173,7 @@ export function QuizExperience({ onBack }: Props) {
       <button className="back-button" type="button" onClick={onBack}>Back to hub</button>
       <header className="quiz-topbar">
         <div className="brand-row compact-brand">
-          <span className="brand-flame" aria-hidden="true" />
+          <Image className="brand-logo compact-logo" src="/truevine-logo.jpg" alt="TrueVine Church logo" width={128} height={128} />
           <div>
             <p className="eyebrow">Ten Lamps Team Challenge</p>
             <h1>TrueVine Bible Quiz</h1>
