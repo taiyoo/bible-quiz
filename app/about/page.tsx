@@ -87,7 +87,11 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
 
           <div className="about-detail-grid">
             <article>
-              <h2>{t.powered}</h2>
+              <h2>
+                <a className="about-powered-link" href="https://www.holocare.app/about" target="_blank" rel="noopener noreferrer">
+                  {t.powered}
+                </a>
+              </h2>
               <p>{t.poweredBody}</p>
             </article>
             <article>

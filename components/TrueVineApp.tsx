@@ -132,10 +132,10 @@ export function TrueVineApp() {
               {t.benefits.map((benefit) => <span key={benefit}>{benefit}</span>)}
             </div>
             <div className="hero-actions">
-              <button className="primary-button" type="button" onClick={() => setView("quiz")}>
+              <button className="secondary-button" type="button" onClick={() => setView("quiz")}>
                 {t.openQuiz}
               </button>
-              <a className="secondary-button" href="#assessments">
+              <a className="primary-button" href="#assessments">
                 {t.browse}
               </a>
               <a className="secondary-button" href={`/about?locale=${locale}`}>

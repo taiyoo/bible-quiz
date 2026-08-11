@@ -246,10 +246,14 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
   color: var(--muted);
 }
 
+.home-view {
+  display: grid;
+  gap: clamp(24px, 4vw, 44px);
+}
+
 .feature-grid {
   display: grid;
   gap: 16px;
-  margin-top: 16px;
 }
 
 .assessment-grid {
@@ -359,6 +363,14 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 }
 
 .about-detail-grid h2 { margin: 0; font-size: 1.35rem; }
+
+.about-powered-link {
+  color: inherit;
+  text-decoration-color: var(--gold);
+  text-underline-offset: 4px;
+}
+
+.about-powered-link:hover { color: var(--blue); }
 
 .about-back { justify-self: start; }
 
@@ -472,6 +484,45 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
   background: white;
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-weight: 800;
+}
+
+.choices-grid button {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.choices-grid button:hover:not(:disabled),
+.choices-grid button:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--team-color, var(--navy));
+}
+
+.choice-key {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: white;
+  background: var(--team-color, var(--navy));
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.choices-grid button.correct {
+  color: white;
+  background: #2f725b;
+  border-color: #2f725b;
+}
+
+.choices-grid button.wrong {
+  color: white;
+  background: var(--coral);
+  border-color: var(--coral);
 }
 
 .answer-grid button span {
@@ -601,13 +652,55 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 
 .timer-card strong { font-size: 1.85rem; }
 
-.quiz-controls input {
+.quiz-controls input[type="number"] {
   width: 70px;
   margin-left: 8px;
   padding: 8px;
   border: 1px solid var(--border);
   border-radius: 8px;
   text-align: center;
+}
+
+.sound-toggle,
+.volume-control,
+.sound-style {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
+}
+
+.sound-toggle input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--gold);
+}
+
+.volume-control input {
+  width: 96px;
+  accent-color: var(--gold);
+}
+
+.sound-style select {
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  color: var(--ink);
+  background: var(--cream);
+  font: inherit;
+  font-weight: 800;
+}
+
+.confetti-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
 }
 
 .story-strip {
