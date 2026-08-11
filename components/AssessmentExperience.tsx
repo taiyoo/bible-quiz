@@ -89,6 +89,7 @@ export function AssessmentExperience({ assessment, campaignToken, onBack }: Prop
   const strongestInsight = assessment.dimensions[strongestKey];
   const labels = assessment.resultLabels;
   const localizedCampaignCopy = campaignCopy[assessment.locale];
+  const scaleGuide = assessment.scale.map((option) => `${option.value} = ${option.label}`).join(", ");
   const draftKey = `truevine_assessment_draft_${assessment.id}_${assessment.locale}`;
   const historyKey = `truevine_assessment_history_${assessment.locale}`;
 
@@ -231,10 +232,10 @@ export function AssessmentExperience({ assessment, campaignToken, onBack }: Prop
     const maxTotal = Object.entries(assessment.maxPerDimension)
       .filter(([key]) => key !== "total")
       .reduce((sum, [, value]) => sum + value, 0);
-    const lowScoringQuestions = assessment.questions
+    const revisitQuestions = assessment.questions
       .map((item) => ({ ...item, answer: answers[item.id] ?? 3 }))
-      .filter((item) => item.answer <= 3)
-      .sort((a, b) => a.answer - b.answer)
+      .filter((item) => assessment.revisitMode === "high" ? item.answer >= 3 : item.answer <= 3)
+      .sort((a, b) => assessment.revisitMode === "high" ? b.answer - a.answer : a.answer - b.answer)
       .slice(0, 6);
 
     return (
@@ -291,12 +292,12 @@ export function AssessmentExperience({ assessment, campaignToken, onBack }: Prop
           })}
         </div>
 
-        {lowScoringQuestions.length > 0 && (
+        {revisitQuestions.length > 0 && (
           <div className="verse-panel">
             <h2>{labels.versesToRevisit}</h2>
             <p>{labels.versesToRevisitDesc}</p>
             <div className="verse-list">
-              {lowScoringQuestions.map((item) => (
+              {revisitQuestions.map((item) => (
                 <article key={item.id}>
                   <strong>{item.text}</strong>
                   <p>{item.verse}</p>
@@ -356,7 +357,7 @@ export function AssessmentExperience({ assessment, campaignToken, onBack }: Prop
         <div className="meta-row assessment-meta">
           <span>{assessment.time}</span>
           <span>{assessment.source}</span>
-          <span>{labels.scoreGuide}</span>
+          <span>{scaleGuide}</span>
         </div>
         <div className="progress-track" aria-label={`Question progress ${progress}%`}><span style={{ width: `${progress}%` }} /></div>
         <p className="question-count">{labels.question} {currentIndex + 1} {labels.of} {assessment.questions.length}</p>

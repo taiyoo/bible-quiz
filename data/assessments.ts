@@ -1,4 +1,6 @@
-export type AssessmentId = "prayer-life" | "overcomer" | "purpose" | "commitment";
+import { additionalAssessmentContent, additionalBaseAssessments } from "./extraAssessments";
+
+export type AssessmentId = "prayer-life" | "overcomer" | "purpose" | "commitment" | "love-languages" | "identities-women" | "identities-men";
 export type Locale = "en" | "id";
 
 export type AssessmentQuestion = {
@@ -8,7 +10,7 @@ export type AssessmentQuestion = {
   verse: string;
 };
 
-type BaseAssessmentDefinition = {
+export type BaseAssessmentDefinition = {
   id: AssessmentId;
   title: string;
   subtitle: string;
@@ -56,6 +58,7 @@ export type AssessmentDefinition = Omit<BaseAssessmentDefinition, "dimensions" |
   groundTruth: string;
   scale: readonly { value: 5 | 4 | 3 | 2 | 1; label: string }[];
   dimensions: Record<string, DimensionInsight>;
+  revisitMode: "low" | "high";
   resultLabels: AssessmentResultLabels;
   reflectionQuestions: string[];
   questions: AssessmentQuestion[];
@@ -88,7 +91,7 @@ const resultLabels: Record<Locale, AssessmentResultLabels> = {
     whatThisMeans: "What This Means",
     nextStep: "Suggested Next Step",
     versesToRevisit: "Verses to Revisit",
-    versesToRevisitDesc: "These verses are linked to lower-rated answers. Use them for prayer and reflection this week.",
+    versesToRevisitDesc: "These verses are linked to highlighted answers. Use them for prayer and reflection this week.",
     reflectionTitle: "Reflection Questions",
     saved: "Result saved in this browser.",
     localHistory: "Recent local results",
@@ -109,7 +112,7 @@ const resultLabels: Record<Locale, AssessmentResultLabels> = {
     whatThisMeans: "Apa Artinya",
     nextStep: "Langkah Berikutnya",
     versesToRevisit: "Ayat untuk Direnungkan",
-    versesToRevisitDesc: "Ayat-ayat ini terkait jawaban dengan skor lebih rendah. Pakai untuk doa dan refleksi minggu ini.",
+    versesToRevisitDesc: "Ayat-ayat ini terkait jawaban yang disorot. Pakai untuk doa dan refleksi minggu ini.",
     reflectionTitle: "Pertanyaan Refleksi",
     saved: "Hasil tersimpan di browser ini.",
     localHistory: "Riwayat lokal terbaru",
@@ -213,13 +216,17 @@ const baseAssessments: BaseAssessmentDefinition[] = [
       { id: 9, text: "When conflict comes up, I try to work through it instead of disappearing.", dimension: "commitment", verse: "Live at peace with everyone. - Romans 12:18" },
     ],
   },
+  ...additionalBaseAssessments,
 ];
 
-type AssessmentLocaleContent = {
+export type AssessmentLocaleContent = {
   title?: string;
   subtitle?: string;
   description?: string;
   dimensionLabels?: Record<string, string>;
+  scale?: readonly { value: 5 | 4 | 3 | 2 | 1; label: string }[];
+  revisitMode?: "low" | "high";
+  resultLabelOverrides?: Partial<AssessmentResultLabels>;
   time: string;
   source: string;
   prompt: string;
@@ -489,6 +496,7 @@ const assessmentContent: Record<AssessmentId, Record<Locale, AssessmentLocaleCon
       ],
     },
   },
+  ...additionalAssessmentContent,
 };
 
 function localizeAssessment(base: BaseAssessmentDefinition, locale: Locale): AssessmentDefinition {
@@ -503,14 +511,15 @@ function localizeAssessment(base: BaseAssessmentDefinition, locale: Locale): Ass
     source: content.source,
     prompt: content.prompt,
     groundTruth: content.groundTruth,
-    scale: localizedScale[locale],
+    scale: content.scale || localizedScale[locale],
+    revisitMode: content.revisitMode || "low",
     dimensions: Object.fromEntries(
       Object.entries(base.dimensions).map(([key, label]) => [
         key,
         { label: content.dimensionLabels?.[key] || label, ...content.dimensionDetails[key] },
       ])
     ),
-    resultLabels: resultLabels[locale],
+    resultLabels: { ...resultLabels[locale], ...content.resultLabelOverrides },
     reflectionQuestions: content.reflectionQuestions,
     questions: content.questions || base.questions,
   };
