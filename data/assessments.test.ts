@@ -13,6 +13,16 @@ const expectedAssessmentIds = [
 
 const locales: Locale[] = ["en", "id"];
 
+const expectedQuestionCounts = {
+  "prayer-life": 20,
+  overcomer: 20,
+  purpose: 20,
+  commitment: 30,
+  "love-languages": 30,
+  "identities-women": 25,
+  "identities-men": 20,
+} as const;
+
 describe("assessment registry", () => {
   it("publishes every production assessment in both supported locales", () => {
     for (const locale of locales) {
@@ -27,12 +37,16 @@ describe("assessment registry", () => {
         const questionIds = new Set(assessment.questions.map((question) => question.id));
 
         expect(assessment.locale).toBe(locale);
+        expect(assessment.questions).toHaveLength(expectedQuestionCounts[assessment.id]);
         expect(questionIds.size).toBe(assessment.questions.length);
         expect(assessment.questions.length).toBeGreaterThan(0);
         expect(assessment.reflectionQuestions.length).toBeGreaterThan(0);
         expect(assessment.scale.map((option) => option.value)).toEqual([5, 4, 3, 2, 1]);
 
         for (const key of dimensionKeys) {
+          const questionsForDimension = assessment.questions.filter((question) => question.dimension === key);
+
+          expect(assessment.maxPerDimension[key]).toBe(questionsForDimension.length * 5);
           expect(assessment.maxPerDimension[key]).toBeGreaterThan(0);
           expect(assessment.dimensions[key].label).toBeTruthy();
           expect(assessment.dimensions[key].summary).toBeTruthy();

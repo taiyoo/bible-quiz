@@ -39,6 +39,6 @@ describe("AssessmentExperience", () => {
 
     expect(screen.getByText(/Your strongest dimension:/)).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Verses to Revisit" })).not.toBeInTheDocument();
-    expect(screen.getByText("60/60")).toBeInTheDocument();
+    expect(screen.getByText("100/100")).toBeInTheDocument();
   });
 });

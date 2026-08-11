@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { AssessmentExperience } from "@/components/AssessmentExperience";
 import { QuizExperience } from "@/components/QuizExperience";
@@ -16,7 +15,7 @@ const uiCopy = {
     hero: "Bible challenges and spiritual reflection tools for small groups, classes, and church campaigns.",
     openQuiz: "Open Bible Quiz",
     browse: "Browse Assessments",
-    powered: "Powered by HoloCare backend",
+    about: "About",
     gameType: "Team Game",
     quizTitle: "Ten Lamps Bible Quiz",
     quizDescription: "Two teams race through Bible questions with a timer, score board, and shared difficulty rounds.",
@@ -38,7 +37,7 @@ const uiCopy = {
     hero: "Tantangan Alkitab dan alat refleksi rohani untuk kelompok kecil, kelas, dan kampanye gereja.",
     openQuiz: "Buka Kuis Alkitab",
     browse: "Lihat Assessment",
-    powered: "Didukung backend HoloCare",
+    about: "Tentang",
     gameType: "Permainan Tim",
     quizTitle: "Kuis Alkitab Ten Lamps",
     quizDescription: "Dua tim menjawab pertanyaan Alkitab dengan timer, papan skor, dan ronde tingkat kesulitan yang seimbang.",
@@ -60,7 +59,7 @@ const uiCopy = {
   hero: string;
   openQuiz: string;
   browse: string;
-  powered: string;
+  about: string;
   gameType: string;
   quizTitle: string;
   quizDescription: string;
@@ -123,14 +122,6 @@ export function TrueVineApp() {
               <button className={locale === "id" ? "active" : ""} type="button" aria-pressed={locale === "id"} aria-label="Switch language to Bahasa Indonesia" onClick={() => setLocale("id")}>ID</button>
             </div>
             <div className="brand-row hero-brand">
-              <Image
-                className="brand-logo hero-logo"
-                src="/truevine-logo.jpg"
-                alt="TrueVine Church logo"
-                width={512}
-                height={512}
-                priority
-              />
               <div>
                 <p className="eyebrow">{t.church}</p>
                 <h1>{t.title}</h1>
@@ -147,8 +138,10 @@ export function TrueVineApp() {
               <a className="secondary-button" href="#assessments">
                 {t.browse}
               </a>
+              <a className="secondary-button" href={`/about?locale=${locale}`}>
+                {t.about}
+              </a>
             </div>
-            <p className="powered-line">{t.powered}</p>
           </header>
 
           <section className="feature-grid" aria-label="Quiz and assessment options">
