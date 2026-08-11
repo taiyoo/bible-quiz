@@ -107,14 +107,20 @@ export function TrueVineApp() {
   const activeAssessment = getAssessmentById(activeAssessmentId, locale) || assessmentList[0];
   const t = uiCopy[locale];
 
+  useEffect(() => {
+    document.documentElement.lang = locale === "id" ? "id" : "en";
+  }, [locale]);
+
   return (
-    <main className="shell">
+    <>
+    <a className="skip-link" href="#main-content">Skip to main content</a>
+    <main id="main-content" className="shell" tabIndex={-1}>
       {view === "home" && (
         <section className="home-view" aria-label="TrueVine quiz and assessments">
           <header className="hero-panel">
-            <div className="locale-toggle" aria-label="Language selector">
-              <button className={locale === "en" ? "active" : ""} type="button" onClick={() => setLocale("en")}>EN</button>
-              <button className={locale === "id" ? "active" : ""} type="button" onClick={() => setLocale("id")}>ID</button>
+            <div className="locale-toggle" role="group" aria-label="Language selector">
+              <button className={locale === "en" ? "active" : ""} type="button" aria-pressed={locale === "en"} aria-label="Switch language to English" onClick={() => setLocale("en")}>EN</button>
+              <button className={locale === "id" ? "active" : ""} type="button" aria-pressed={locale === "id"} aria-label="Switch language to Bahasa Indonesia" onClick={() => setLocale("id")}>ID</button>
             </div>
             <div className="brand-row hero-brand">
               <Image
@@ -131,7 +137,7 @@ export function TrueVineApp() {
               </div>
             </div>
             <p className="hero-copy">{t.hero}</p>
-            <div className="benefit-row">
+            <div className="benefit-row" aria-label="Assessment benefits">
               {t.benefits.map((benefit) => <span key={benefit}>{benefit}</span>)}
             </div>
             <div className="hero-actions">
@@ -157,7 +163,7 @@ export function TrueVineApp() {
               </button>
             </article>
 
-            <div id="assessments" className="assessment-grid">
+            <div id="assessments" className="assessment-grid" aria-label="Available assessments">
               {assessmentList.map((assessment) => (
                 <article key={assessment.id} className={`feature-card accent-${assessment.accent}`}>
                   <p className="eyebrow">{t.assessment}</p>
@@ -173,6 +179,7 @@ export function TrueVineApp() {
                     <button
                       className="secondary-button compact"
                       type="button"
+                      aria-label={`${t.open} ${assessment.title}`}
                       onClick={() => {
                         setActiveAssessmentId(assessment.id);
                         setView("assessment");
@@ -210,5 +217,6 @@ export function TrueVineApp() {
         />
       )}
     </main>
+    </>
   );
 }

@@ -49,6 +49,11 @@ const initialTeams: Record<TeamKey, TeamState> = {
   right: { name: "Team Wisdom", score: 0, answered: 0, currentQuestion: null, choices: [], feedback: "" },
 };
 
+const teamLabels: Record<TeamKey, string> = {
+  left: "Left team",
+  right: "Right team",
+};
+
 export function QuizExperience({ onBack }: Props) {
   const [minutes, setMinutes] = useState(5);
   const [timeLeft, setTimeLeft] = useState(300);
@@ -138,13 +143,17 @@ export function QuizExperience({ onBack }: Props) {
 
   function renderTeam(teamKey: TeamKey) {
     const team = teams[teamKey];
+    const headingId = `${teamKey}-team-heading`;
+    const questionId = `${teamKey}-team-question`;
+    const feedbackId = `${teamKey}-team-feedback`;
     return (
-      <article className={`team-panel ${teamKey === "left" ? "team-left" : "team-right"}`}>
+      <article className={`team-panel ${teamKey === "left" ? "team-left" : "team-right"}`} aria-labelledby={headingId}>
         <header className="team-header">
-          <input value={team.name} onChange={(event) => setTeamName(teamKey, event.target.value)} aria-label={`${teamKey} team name`} />
-          <span>{team.score} correct</span>
+          <label className="sr-only" htmlFor={`${teamKey}-team-name`}>{teamLabels[teamKey]} name</label>
+          <input id={`${teamKey}-team-name`} value={team.name} onChange={(event) => setTeamName(teamKey, event.target.value)} />
+          <span aria-label={`${team.name} score: ${team.score} correct`}>{team.score} correct</span>
         </header>
-        <div className="lamp-meter" aria-label={`${team.name} score meter`}>
+        <div className="lamp-meter" role="meter" aria-label={`${team.name} score meter`} aria-valuemin={0} aria-valuemax={12} aria-valuenow={Math.min(team.score, 12)} aria-valuetext={`${team.score} correct answers`}>
           {Array.from({ length: 12 }, (_, index) => (
             <span key={index} className={index < Math.min(team.score, 12) ? "lit" : ""} />
           ))}
@@ -154,15 +163,16 @@ export function QuizExperience({ onBack }: Props) {
             <span>{team.currentQuestion ? `${team.currentQuestion.story} - ${team.currentQuestion.difficulty}` : "Ready"}</span>
             <span>Question {team.answered}</span>
           </div>
-          <h2>{team.currentQuestion?.question || "Press Start to begin."}</h2>
-          <div className="choices-grid">
+          <h2 id={headingId}>{team.name}</h2>
+          <p id={questionId} className="team-question-text">{team.currentQuestion?.question || "Press Start to begin."}</p>
+          <div className="choices-grid" role="group" aria-labelledby={questionId} aria-describedby={feedbackId}>
             {team.choices.map((choice) => (
-              <button key={choice} type="button" onClick={() => answer(teamKey, choice)} disabled={!running || finished}>
+              <button key={choice} type="button" onClick={() => answer(teamKey, choice)} disabled={!running || finished} aria-label={`${team.name}: answer ${choice}`}>
                 {choice}
               </button>
             ))}
           </div>
-          <p className="feedback" aria-live="polite">{team.feedback}</p>
+          <p id={feedbackId} className="feedback" role="status" aria-live="polite">{team.feedback}</p>
         </div>
       </article>
     );
@@ -173,20 +183,21 @@ export function QuizExperience({ onBack }: Props) {
       <button className="back-button" type="button" onClick={onBack}>Back to hub</button>
       <header className="quiz-topbar">
         <div className="brand-row compact-brand">
-          <Image className="brand-logo compact-logo" src="/truevine-logo.jpg" alt="TrueVine Church logo" width={128} height={128} />
+          <Image className="brand-logo compact-logo" src="/truevine-logo.jpg" alt="" aria-hidden="true" width={128} height={128} />
           <div>
             <p className="eyebrow">Ten Lamps Team Challenge</p>
             <h1>TrueVine Bible Quiz</h1>
           </div>
         </div>
-        <div className="timer-card" aria-live="polite">
+        <div className="timer-card" role="timer" aria-live="polite" aria-label={`Time remaining ${formatTime(timeLeft)}`}>
           <span>Time</span>
           <strong>{formatTime(timeLeft)}</strong>
         </div>
         <div className="quiz-controls">
-          <label>
+          <label htmlFor="quiz-minutes">
             Minutes
             <input
+              id="quiz-minutes"
               type="number"
               min={1}
               max={30}
@@ -198,12 +209,12 @@ export function QuizExperience({ onBack }: Props) {
               }}
             />
           </label>
-          <button className="primary-button" type="button" onClick={startOrPause}>{running ? "Pause" : "Start"}</button>
-          <button className="secondary-button compact" type="button" onClick={resetQuiz}>Reset</button>
+          <button className="primary-button" type="button" aria-pressed={running} onClick={startOrPause}>{running ? "Pause" : "Start"}</button>
+          <button className="secondary-button compact" type="button" onClick={resetQuiz} aria-label="Reset quiz scores and timer">Reset</button>
         </div>
       </header>
 
-      <section className="story-strip">
+      <section className="story-strip" aria-label="Quiz instructions">
         <div className="lamp-row" aria-hidden="true">
           {Array.from({ length: 10 }, (_, index) => <span key={index} className={index < 5 ? "lit" : ""} />)}
         </div>
@@ -211,14 +222,14 @@ export function QuizExperience({ onBack }: Props) {
       </section>
 
       {finished && (
-        <section className="winner-panel">
+        <section className="winner-panel" role="status" aria-live="polite">
           <p className="eyebrow">Final Result</p>
           <h2>{winner === "Tie" ? "It is a tie" : `${winner} wins`}</h2>
           <p>{teams.left.name}: {teams.left.score} correct. {teams.right.name}: {teams.right.score} correct.</p>
         </section>
       )}
 
-      <section className="team-grid">
+      <section className="team-grid" aria-label="Team quiz boards">
         {renderTeam("left")}
         {renderTeam("right")}
       </section>

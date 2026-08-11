@@ -92,6 +92,8 @@ export function AssessmentExperience({ assessment, campaignToken, onBack }: Prop
   const scaleGuide = assessment.scale.map((option) => `${option.value} = ${option.label}`).join(", ");
   const draftKey = `truevine_assessment_draft_${assessment.id}_${assessment.locale}`;
   const historyKey = `truevine_assessment_history_${assessment.locale}`;
+  const questionHeadingId = `assessment-question-${assessment.id}`;
+  const scaleGuideId = `assessment-scale-guide-${assessment.id}`;
 
   useEffect(() => {
     let restored = false;
@@ -252,7 +254,7 @@ export function AssessmentExperience({ assessment, campaignToken, onBack }: Prop
         </div>
 
         {campaignToken && (
-          <div className={`campaign-banner state-${submitState}`}>
+          <div className={`campaign-banner state-${submitState}`} role={submitState === "error" ? "alert" : "status"} aria-live="polite">
             {submitState === "submitted" && localizedCampaignCopy.submitted}
             {submitState === "submitting" && localizedCampaignCopy.submitting}
             {submitState === "error" && localizedCampaignCopy.error}
@@ -285,7 +287,7 @@ export function AssessmentExperience({ assessment, campaignToken, onBack }: Prop
                   <strong>{label.label}</strong>
                   <span>{value}/{max}</span>
                 </div>
-                <div className="score-bar"><span style={{ width: `${Math.min(100, Math.round((value / max) * 100))}%` }} /></div>
+                <div className="score-bar" role="progressbar" aria-label={`${label.label} score`} aria-valuemin={0} aria-valuemax={max} aria-valuenow={value}><span style={{ width: `${Math.min(100, Math.round((value / max) * 100))}%` }} /></div>
                 <p>{label.summary}</p>
               </div>
             );
@@ -329,7 +331,7 @@ export function AssessmentExperience({ assessment, campaignToken, onBack }: Prop
           </div>
         )}
 
-        <div className="result-actions">
+        <div className="result-actions" aria-label="Assessment result actions">
           <button className="primary-button" type="button" onClick={resetAssessment}>
             {labels.retake}
           </button>
@@ -343,7 +345,7 @@ export function AssessmentExperience({ assessment, campaignToken, onBack }: Prop
     <section className={`assessment-panel accent-${assessment.accent}`} aria-label={assessment.title}>
       <button className="back-button" type="button" onClick={onBack}>{labels.back}</button>
       {campaignToken && (
-        <div className={`campaign-banner state-${submitState}`}>
+        <div className={`campaign-banner state-${submitState}`} role={submitState === "error" ? "alert" : "status"} aria-live="polite">
           {submitState === "joining" && localizedCampaignCopy.joining}
           {submitState === "ready" && `${localizedCampaignCopy.ready}: ${campaignInfo?.title || "Group campaign"}`}
           {submitState === "submitted" && localizedCampaignCopy.alreadySubmitted}
@@ -357,20 +359,20 @@ export function AssessmentExperience({ assessment, campaignToken, onBack }: Prop
         <div className="meta-row assessment-meta">
           <span>{assessment.time}</span>
           <span>{assessment.source}</span>
-          <span>{scaleGuide}</span>
+          <span id={scaleGuideId}>{scaleGuide}</span>
         </div>
-        <div className="progress-track" aria-label={`Question progress ${progress}%`}><span style={{ width: `${progress}%` }} /></div>
+        <div className="progress-track" role="progressbar" aria-label="Assessment progress" aria-valuemin={1} aria-valuemax={assessment.questions.length} aria-valuenow={currentIndex + 1} aria-valuetext={`${labels.question} ${currentIndex + 1} ${labels.of} ${assessment.questions.length}`}><span style={{ width: `${progress}%` }} /></div>
         <p className="question-count">{labels.question} {currentIndex + 1} {labels.of} {assessment.questions.length}</p>
       </header>
 
       <article className="question-card">
         <p className="verse-label">{labels.biblicalAnchor}</p>
         <p className="verse-text">{question.verse}</p>
-        <h2>{question.text}</h2>
-        <div className="answer-grid">
+        <h2 id={questionHeadingId}>{question.text}</h2>
+        <div className="answer-grid" role="group" aria-labelledby={questionHeadingId} aria-describedby={scaleGuideId}>
           {assessment.scale.map((option) => (
-            <button key={option.value} type="button" onClick={() => answerQuestion(option.value)}>
-              <span>{option.value}</span>
+            <button key={option.value} type="button" onClick={() => answerQuestion(option.value)} aria-label={`${option.value}: ${option.label}`}>
+              <span aria-hidden="true">{option.value}</span>
               {option.label}
             </button>
           ))}
